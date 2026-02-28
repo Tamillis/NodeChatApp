@@ -1,0 +1,16 @@
+{
+  "name": "nodechatserver",
+  "version": "1.0.0",
+  "description": "",
+  "license": "ISC",
+  "author": "",
+  "type": "module",
+  "main": "chatserver.js",
+  "scripts": {
+    "test": "test"
+  },
+  "dependencies": {
+    "better-sqlite3": "^12.6.2",
+    "ws": "^8.19.0"
+  }
+}
