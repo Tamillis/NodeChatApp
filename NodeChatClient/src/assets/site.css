@@ -1,4 +1,4 @@
-*{
+* {
     padding: 0px;
     margin: 0px;
 }
@@ -7,4 +7,36 @@ body {
     width: 100vw;
     height: 100vh;
     overflow: hidden;
+}
+
+.flex {
+    display: flex;
+}
+
+.flex-col {
+    flex-direction: column;
+}
+
+.h100 {
+    height: 100%;
+}
+
+.btn {
+    background: #33ff33;
+    color: #000;
+    border: none;
+    padding: 5px 10px;
+    cursor: pointer;
+    font-weight: bold;
+}
+.btn:hover {
+  background: #ffffff;
+}
+
+.input {
+    background: transparent;
+    border: none;
+    color: #33ff33;
+    font-family: inherit;
+    outline: none;
 }

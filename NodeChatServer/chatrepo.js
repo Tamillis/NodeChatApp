@@ -13,12 +13,13 @@ db.exec(`
   )
 `);
 
+let postMessagePrep = db.prepare('INSERT INTO messages (user, text) VALUES (?, ?)');
+let getMessagesPrep = db.prepare('SELECT user, text, timestamp FROM messages ORDER BY timestamp DESC LIMIT 50');
+
 export function getMessages() {
-    let prep = db.prepare('SELECT user, text, timestamp FROM messages ORDER BY timestamp DESC LIMIT 50');
-    return prep.all();
+    return getMessagesPrep.all();
 }
 
 export function postMessage(user, text) {
-    let prep = db.prepare('INSERT INTO messages (user, text) VALUES (?, ?)');
-    prep.run(user, text);
+    postMessagePrep.run(user, text);
 }

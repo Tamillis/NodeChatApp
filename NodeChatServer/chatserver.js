@@ -1,40 +1,46 @@
 import { WebSocketServer } from 'ws';
-import {getMessages, postMessage} from './chatrepo'
+import { getMessages, postMessage } from './chatrepo.js'
 
 const wss = new WebSocketServer({ port: 3000 });
 console.log("Chat server running on port 3000!!!");
 
+// message handling
 const serialiseMsg = (type, data) => JSON.stringify({ type, data });
 
-wss.on('connection', (ws, req) => {
-    console.log("Client connected: " + req.socket.remoteAddress);
+const sendMessages = (client) => {
+    const messages = getMessages();
+    client.send(serialiseMsg("messages", messages));
+}
 
-    const sendMessages = (client) => {
-        const messages = getMessages();
-        client.send(serialiseMsg("messages", messages));
-    }
+const truncateMsg = (msg) => msg.length > 25 ? msg.substring(0, 22) + "..." : msg;
 
-    sendMessages(ws);
-
-    ws.on('message', (json) => {
+const processMessage = (json) => {
         const msg = JSON.parse(json);
 
         if (msg.type !== 'message') return;
 
-        //save
+        console.log("Saving user " + msg.data.user.substring(0,5).toUpperCase() + "'s message '" + truncateMsg(msg.data.text) + "'");
         postMessage(msg.data.user, msg.data.text);
 
-        // Broadcast all messages
+        console.log("Sending messages to all connected clients...")
         wss.clients.forEach(client => {
             if (client.readyState === 1) sendMessages(client);
         });
-    });
+}
 
-    // Heartbeat to keep Cloudflare Tunnel open (every 45s)
-    const ping = setInterval(() => ws.ping(), 45000);
+const connect = (ws, req) => {
+    console.log("Client connected: " + req.socket.remoteAddress);
+    console.log("Sending messages...")
+    sendMessages(ws);
 
-    ws.on('close', () => clearInterval(ping));
-})
+    ws.on('message', processMessage);
+
+    // Heartbeat to keep Cloudflare Tunnel open (every 30s)
+    const clientPing = setInterval(() => ws.ping(), 30_000);
+    ws.on('close', () => clearInterval(clientPing));
+}
+
+wss.on('connection', connect)
 
 const shutdown = () => {
     console.log("Shutting down...");
