@@ -1,32 +1,39 @@
 <template>
-  <div class="chat-container">
-    <div class="crt-overlay"></div>
+  <div class="monitor-frame">
+    <div class="chat-container">
+      <div v-if="crtEnabled" class="crt-overlay"></div>
 
-    <div class="flex flex-col h100">
-      <header>
-        <span>OPTT_CHAT_LOG v0.0.1 - ONLINE*</span>
-        <span>{{ termDate(new Date()) }}</span>
-      </header>
+      <div class="flex flex-col h100">
+        <header>
+          <span>CHAT_LOG v0.0.2 - ONLINE*</span>
+          <span>{{ termDate(new Date()) }}</span>
+          <span>
+            <button @click="crtEnabled = !crtEnabled" class="btn" :title="crtEnabled ? 'Disable CRT' : 'Enable CRT'">
+              [CRT: {{ crtEnabled ? 'ON' : 'OFF' }}]
+            </button>
+          </span>
+        </header>
 
-      <main class="message-feed" ref="feed">
-        <div v-for="(msg, i) in messages.toReversed()" :key="i">
-          <Message :msg="msg" />
-        </div>
-      </main>
+        <main class="message-feed" ref="feed">
+          <div v-for="(msg, i) in messages.toReversed()" :key="i">
+            <Message :msg="msg" />
+          </div>
+        </main>
 
-      <footer>
-        <div v-if="view === 'chat'" class="wrapper">
-          <ChatForm @send-message="sendMessage" :username="user.username" />
+        <footer>
+          <div v-if="view === 'chat'" class="wrapper">
+            <ChatForm @send-message="sendMessage" :username="user.username" />
 
-          <button @click="view = 'auth'" class="btn" title="Switch User">
-            [AUTH]
-          </button>
-        </div>
-        <div v-else class="wrapper">
-          <AuthForm v-model="user" />
-          <button @click="view = 'chat'" class="btn">[INPUT]</button>
-        </div>
-      </footer>
+            <button @click="view = 'auth'" class="btn" title="Switch User">
+              [AUTH]
+            </button>
+          </div>
+          <div v-else class="wrapper">
+            <AuthForm v-model="user" />
+            <button @click="view = 'chat'" class="btn">[INPUT]</button>
+          </div>
+        </footer>
+      </div>
     </div>
   </div>
 </template>
@@ -53,6 +60,7 @@ const user = ref({
 });
 const feed = ref(null);
 const view = ref("chat");  // should be just "chat" or "auth"
+const crtEnabled = ref(true);
 
 const socketStatus = ref("disconnected"); // 'connected', 'disconnected', 'reconnecting'
 let socket = null;
@@ -121,16 +129,32 @@ function sendMessage(msg) {
 <style>
 @import "@/assets/site.css";
 
+.monitor-frame {
+  width: 1200px;
+  /* Adjust based on your actual terminal.jpg size */
+  height: 900px;
+  background-image: url('@/assets/terminal.jpg');
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: relative;
+}
+
 .chat-container {
   background: #0a0a0a;
   color: #33ff33;
   font-family: 'Courier New', Courier, monospace;
-  height: calc(100vh - 40px);
-  padding: 20px;
-  margin: 0;
-  position: relative;
-  overflow: hidden;
   text-shadow: 0 0 1rem rgba(51, 255, 51, 0.8);
+
+  width: 800px;
+  height: 600px;
+  border-radius: 20px;
+
+  /* Positioning it slightly offset if the monitor in terminal.jpg isn't perfectly centered */
+  margin-top: -40px;
 }
 
 .crt-overlay {
