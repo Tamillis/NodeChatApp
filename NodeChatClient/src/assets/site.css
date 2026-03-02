@@ -7,6 +7,7 @@ body {
     width: 100vw;
     height: 100vh;
     overflow: hidden;
+    background: linear-gradient( rgb(180,143,98), rgb(225,207,188));
 }
 
 .flex {
@@ -17,6 +18,10 @@ body {
     flex-direction: column;
 }
 
+.f-grow-1 {
+    flex-grow: 1;
+}
+
 .h100 {
     height: 100%;
 }
@@ -25,9 +30,8 @@ body {
     background: #33ff33;
     color: #000;
     border: none;
-    padding: 5px 10px;
+    padding: 4px 8px;
     cursor: pointer;
-    font-weight: bold;
 }
 .btn:hover {
   background: #ffffff;

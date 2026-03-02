@@ -6,7 +6,7 @@
     type="text" 
     placeholder="Send..."
     autofocus 
-    class="terminal-input input"
+    class="terminal-input input f-grow-1"
     />
     <button @click="sendMessage" class="btn">Send</button>
 </template>
@@ -26,8 +26,5 @@ function sendMessage() {
 </script>
 
 <style lang="css" scoped>
-.terminal-input {
-  font-size: 1.1rem;
-  flex-grow: 1;
-}
+
 </style>
