@@ -7,7 +7,7 @@
 
       <div class="flex flex-col h100">
         <header>
-          <span>CHAT_LOG v0.1.4 - @</span>
+          <span>CHAT_LOG v0.2.1 - @</span>
           <input v-model="room" class="terminal-input input f-grow-1" placeholder="ROOM" :disabled="!uiEnabled" />
           <span>{{ time }}</span>
           <button @click="crtEnabled = !crtEnabled" class="btn" :title="crtEnabled ? 'Disable CRT' : 'Enable CRT'"
@@ -92,6 +92,26 @@ onMounted(async () => {
 onUnmounted(() => {
   clearInterval(timer);
 });
+
+//TODO: the auth bit below
+const sendAuth = (type) => {
+    systemMessage(`ENCRYPTING ${newUser.username}...`);
+    
+    // Send to your Node backend via the open socket
+    socket.send(JSON.stringify({
+        type: type, // 'login' or 'register'
+        data: newUser.value
+    }));
+};
+
+// Listen for response (Basic example)
+socket.onmessage = (e) => {
+   const res = JSON.parse(e.data);
+   if (res.type === 'auth_response' && res.data.success) {
+       user.value = { alias: res.data.alias, authenticated: true };
+       $emit('view', 'chat');
+   }
+}
 
 async function connect() {
   systemMessage("Attempting to connect to " + socketUrl, true)

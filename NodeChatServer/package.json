@@ -10,6 +10,7 @@
     "test": "test"
   },
   "dependencies": {
+    "bcrypt": "^6.0.0",
     "better-sqlite3": "^12.6.2",
     "ws": "^8.19.0"
   }

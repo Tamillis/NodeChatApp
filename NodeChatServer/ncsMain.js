@@ -1,5 +1,6 @@
 import { WebSocketServer } from 'ws';
 import { getMessages, getMessagesOf, postMessage } from './ncsRepo.js'
+import { authMsg, registerUser, loginUser } from './ncsAuth.js'
 import { ncsMessage } from './ncsDTO.js'
 
 const wss = new WebSocketServer({ port: 3000 });
@@ -16,28 +17,47 @@ const sendMessages = (client) => {
 const truncateMsg = (msg) => msg.length > 25 ? msg.substring(0, 22) + "..." : msg;
 
 const processMessage = (json, client) => {
-        const msg = JSON.parse(json);
+    const msg = JSON.parse(json);
 
-        if (msg.type == 'message') {
-            if(!msg.data instanceof ncsMessage) {
-                console.warn("processMessage: msg.data not of class ncsMessage");
-                return;
-            }
-            
-            console.log(`Saving message: [${msg.data.room}] <${msg.data.user}>: ${msg.data.text}`);
-            postMessage(msg.data);
-            
-            console.log(`Sending messages to all connected clients of room ${client.currentRoom}...`)
-            wss.clients.forEach(c => {
-                if (c.readyState === 1 && c.currentRoom === client.currentRoom) sendMessages(client);
-            });
+    if (msg.type == 'message') {
+        if (!msg.data instanceof ncsMessage) {
+            console.warn("processMessage: msg.data not of class ncsMessage");
+            return;
         }
-        else if (msg.type == "room") {
-            client.currentRoom = msg.data;
-            console.log(`Client moved to room: ${client.currentRoom}`);
-            sendMessages(client);
-        }
-        else console.debug(msg);
+
+        console.log(`Saving message: [${msg.data.room}] <${msg.data.user}>: ${msg.data.text}`);
+        postMessage(msg.data);
+
+        console.log(`Sending messages to all connected clients of room ${client.currentRoom}...`)
+        wss.clients.forEach(c => {
+            if (c.readyState === 1 && c.currentRoom === client.currentRoom) sendMessages(client);
+        });
+    }
+
+    else if (msg.type == "room") {
+        client.currentRoom = msg.data;
+        console.log(`Client moved to room: ${client.currentRoom}`);
+        sendMessages(client);
+    }
+
+    else if (msg.type === 'login') {
+        //TODO: check this
+
+        const result = loginUser(msg.data.username, msg.data.password);
+        client.send(JSON.stringify({
+            type: 'auth_response',
+            data: { ...result, alias: msg.data.username }
+        }));
+    }
+
+    else if (msg.type === 'register') {
+        //TODO: check this
+
+        const result = registerUser(msg.data.username, msg.data.password);
+        client.send(JSON.stringify({ type: 'reg_response', data: result }));
+    }
+
+    else console.debug(msg);
 }
 
 const connect = (ws, req) => {
