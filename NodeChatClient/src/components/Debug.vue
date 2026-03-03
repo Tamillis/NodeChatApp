@@ -12,9 +12,6 @@
         <label>Skew Y: {{ model.skewY }}
             <input type="range" v-model="model.skewY" min="-10" max="10" step="0.1">
         </label>
-        <label>Perspective: {{ model.prespective }}
-            <input type="range" v-model="model.prespective" min="500" max="2000" step="1">
-        </label>
         <label>Margin Left: {{ model.left }}
             <input type="range" v-model="model.left" min="-500" max="500" step="1">
         </label>
@@ -22,10 +19,10 @@
             <input type="range" v-model="model.top" min="-500" max="500" step="1">
         </label>
         <label>Radius Width: {{ model.radiusWidth }}
-            <input type="range" v-model="model.radiusWidth" min="0" max="150" step="1">
+            <input type="range" v-model="model.radiusWidth" min="0" max="350" step="1">
         </label>
         <label>Radius Height: {{ model.radiusHeight }}
-            <input type="range" v-model="model.radiusHeight" min="0" max="150" step="1">
+            <input type="range" v-model="model.radiusHeight" min="0" max="350" step="1">
         </label>
     </div>
 </template>
@@ -33,8 +30,8 @@
 <style scoped>
 .calibration-panel {
     position: absolute;
-    left: 10px;
-    top: 10px;
+    right: 5px;
+    top: 5px;
     z-index: 100;
     background: rgb(0, 0, 0);
     color: white;
@@ -48,7 +45,7 @@
 
 label, input {
     text-align: center;
-    width: 150px;
+    width: 250px;
 }
 </style>
 

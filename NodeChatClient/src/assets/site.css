@@ -1,17 +1,21 @@
 * {
     padding: 0px;
     margin: 0px;
+
+    font-family: "Lucida Console", "Courier New", monospace;
+    font-size: 16px;
 }
 
 body {
     width: 100vw;
     height: 100vh;
     overflow: hidden;
-    background: linear-gradient( rgb(180,143,98), rgb(225,207,188));
+    background: linear-gradient(rgb(180, 143, 98), rgb(225, 207, 188));
 }
 
 .flex {
     display: flex;
+    gap: 10px;
 }
 
 .flex-col {
@@ -30,17 +34,32 @@ body {
     background: #33ff33;
     color: #000;
     border: none;
-    padding: 4px 8px;
+    padding: 4px 2px;
     cursor: pointer;
 }
+
 .btn:hover {
-  background: #ffffff;
+    background: #ffffff;
+}
+
+.btn:disabled {
+    background-color: darkred;
 }
 
 .input {
     background: transparent;
-    border: none;
+    border: 1px solid #33ff33;
     color: #33ff33;
-    font-family: inherit;
     outline: none;
+    padding: 2px;
+    caret-color: transparent;
+    caret-shape: block;
+}
+
+.input:focus {
+    caret-color: #33ff33;
+}
+
+.input:disabled {
+    border-color: darkred;
 }

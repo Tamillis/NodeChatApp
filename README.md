@@ -1,9 +1,10 @@
 # Node Chat App
+
+![terminal screenshot](./Screenshots/terminal.png)
+
 A demo app I intend to set up on a cloudflare worked.
 
 It is a small test demo of a web socket using chat client.
-
-Very much a WIP rn.
 
 ## Project Setup
 
