@@ -40,6 +40,14 @@ const processMessage = async (json, client) => {
     else if (msg.type === "room") {
         client.currentRoom = msg.data;
         console.log(`Client moved to room: ${client.currentRoom}`);
+        if(client.isAuthenticated) {
+            let joinMsg = {
+                room: client.currentRoom,
+                user: "SYSTEM",
+                text: client.alias + " has joined the room."
+            }
+            postMessage(joinMsg);
+        }
         sendMessages(client);
     }
 
@@ -49,6 +57,7 @@ const processMessage = async (json, client) => {
         console.log(result);
         if(result.success) {
             client.isAuthenticated = true;
+            client.alias = msg.data.username;
         }
 
         client.send(serialiseMsg('login_response', result));
@@ -60,12 +69,16 @@ const processMessage = async (json, client) => {
         if(result.success) {
             console.log(msg.data.username + " registered.");
             client.isAuthenticated = true;
+            client.alias = msg.data.username;
         }
         else console.log(msg.data.username + " already taken.");
 
         client.send(serialiseMsg('reg_response', result));
     }
-    else if(msg.type === 'logout') client.isAuthenticated = false;
+    else if(msg.type === 'logout') {
+        client.isAuthenticated = false;
+        client.alias = "";
+    }
     else console.debug(msg);
 }
 
