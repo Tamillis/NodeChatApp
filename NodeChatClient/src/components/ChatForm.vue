@@ -8,11 +8,14 @@
         autofocus 
         placeholder="SEND"
         class="input f-grow-1"
-        :disabled="!uiEnabled"
+        :disabled="!uiEnabled || !authenticated"
         />
-        <button @click="sendMessage" class="btn" :disabled="!uiEnabled">[SEND]</button>
-        <button @click="$emit('view', 'auth')" class="btn" title="Switch User" :disabled="!uiEnabled" >
+        <button @click="sendMessage" class="btn" :disabled="!uiEnabled || !authenticated">[SEND]</button>
+        <button @click="$emit('view', 'auth')" class="btn" title="Switch User" :disabled="!uiEnabled" v-if="!authenticated" >
             [AUTH]
+        </button>
+        <button @click="$emit('logout')" class="btn" title="Switch User" v-else >
+            [LOGOUT]
         </button>
     </div>
 </template>
@@ -20,10 +23,10 @@
 <script setup>
 import {ref} from 'vue';
 
-const emit = defineEmits(['sendMessage', 'view'])
+const emit = defineEmits(['sendMessage', 'view', 'logout'])
 
 const msg = ref("");
-const props = defineProps(["username", "room", "uiEnabled"]);
+const props = defineProps(["username", "room", "uiEnabled", "authenticated"]);
 
 function sendMessage() {
     emit('sendMessage', msg.value);

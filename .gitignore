@@ -144,8 +144,8 @@ vite.config.ts.timestamp-*
 .vite/
 
 # db files
-*.db
-*.db-shm
-*.db-wal
+*.chat._db
+*.chat._db-shm
+*.chat._db-wal
 
 **/.vscode

@@ -7,7 +7,7 @@
 
       <div class="flex flex-col h100">
         <header>
-          <span>CHAT_LOG v0.2.2 - @</span>
+          <span>CHAT_LOG v0.2.3 - @</span>
           <input v-model="room" class="terminal-input input f-grow-1" placeholder="ROOM" :disabled="!uiEnabled" />
           <span>{{ time }}</span>
           <button @click="crtEnabled = !crtEnabled" class="btn" :title="crtEnabled ? 'Disable CRT' : 'Enable CRT'"
@@ -24,8 +24,10 @@
 
         <footer>
           <ChatForm v-if="view === 'chat'" @send-message="sendMessage" @view="(newView) => view = newView"
-            :username="user.username" :room="room" :uiEnabled="uiEnabled && user.username" />
-          <AuthForm v-else v-model="user" @view="(newView) => view = newView" @login="() => sendAuth('login')" @reg="() => sendAuth('reg')"  />
+            @logout="logout" :username="user.username" :room="room" :uiEnabled="uiEnabled"
+            :authenticated="user.authenticated" />
+          <AuthForm v-else v-model="user" @view="(newView) => view = newView" @login="() => sendAuth('login')"
+            @reg="() => sendAuth('reg')" />
         </footer>
       </div>
     </div>
@@ -42,9 +44,11 @@ import Debug from "./components/Debug.vue";
 
 const messages = ref([]);
 const user = ref({
-  username: "tester",
-  password: ""
+  username: "",
+  password: "",
+  authenticated: false
 });
+
 const room = ref("root");
 const time = ref(getTime(new Date()));
 
@@ -117,9 +121,12 @@ async function connect() {
       await scrollToBottom();
     }
 
-    if (msg.type === 'auth_response' && msg.data.success) {
-      user.value = { alias: msg.data.alias, authenticated: true };
-      view.value = "chat";
+    if (msg.type === 'login_response') {
+      authenticate(msg, "Login successful!");
+    }
+
+    if (msg.type === 'reg_response') {
+      authenticate(msg, "Registration successful - welcome to the chat");
     }
   };
 
@@ -140,6 +147,20 @@ async function connect() {
     console.error("Socket encountered error: ", err);
   };
 };
+
+function authenticate(msg, successText) {
+  console.log(msg);
+  user.value.password = "";
+  if (msg.data.success) {
+    user.value.authenticated = true;
+    systemMessage(successText, true)
+  }
+  else {
+    user.value.authenticated = false;
+    systemMessage("ERROR: " + msg.data.error, true);
+  }
+  view.value = "chat";
+}
 
 async function scrollToBottom() {
   await nextTick();
@@ -169,13 +190,15 @@ function setRoom(newRoom) {
 }
 
 function sendAuth(type) {
-  systemMessage(`ENCRYPTING ${user.value.username}...`);
+  systemMessage(`AUTHORISING ${user.value.username}...`);
 
   // Send to your Node backend via the open socket
-  socket.send(JSON.stringify({
-    type: type, // 'login' or 'register'
-    data: user.value
-  }));
+  setTimeout(() => {
+    socket.send(JSON.stringify({
+      type: type, // 'login' or 'register'
+      data: user.value
+    }));
+  }, 1333);
 };
 
 function sendMessage(msg) {
@@ -190,6 +213,21 @@ function sendMessage(msg) {
     }
   });
 
+  socket.send(body);
+};
+
+function logout() {
+  let body = JSON.stringify({
+    type: "logout",
+    data: {
+      user: user.value.username
+    }
+  });
+  user.value = {
+    username: "",
+    password: "",
+    authenticated: false
+  };
   socket.send(body);
 };
 
@@ -221,16 +259,10 @@ function introMessages() {
     setTimeout(() => {
       systemMessage(`THIS IS A DEMO OF A SIMPLE VUE APP AND NODE WEBSOCKET SERVER`, true);
       setTimeout(() => {
+        uiEnabled.value = true;
         systemMessage(`CONNECTING TO ROOM: ${room.value}...`, true);
-        setTimeout(() => {
-          uiEnabled.value = true;
-          let roomMsg = JSON.stringify({
-            type: "room",
-            data: room.value
-          });
-          socket.send(roomMsg);
-        }, 1333)
-      }, 5000);
+        setRoom(room.value);
+      }, 3333);
     }, 2500);
   }, 666);
 }

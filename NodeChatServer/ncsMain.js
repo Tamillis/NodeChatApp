@@ -1,6 +1,6 @@
 import { WebSocketServer } from 'ws';
 import { getMessages, getMessagesOf, postMessage } from './ncsRepo.js'
-import { authMsg, registerUser, loginUser } from './ncsAuth.js'
+import { authMsg, registerUser, loginUser } from './ncsAuth.js' 
 import { ncsMessage } from './ncsDTO.js'
 
 const wss = new WebSocketServer({ port: 3000 });
@@ -14,14 +14,17 @@ const sendMessages = (client) => {
     client.send(serialiseMsg("messages", messages));
 }
 
-const truncateMsg = (msg) => msg.length > 25 ? msg.substring(0, 22) + "..." : msg;
-
-const processMessage = (json, client) => {
+const processMessage = async (json, client) => {
     const msg = JSON.parse(json);
 
-    if (msg.type == 'message') {
+    if (msg.type === 'message') {
         if (!msg.data instanceof ncsMessage) {
             console.warn("processMessage: msg.data not of class ncsMessage");
+            return;
+        }
+
+        if(!client.isAuthenticated) {
+            console.warn("processMessage: client not authenticated");
             return;
         }
 
@@ -34,29 +37,35 @@ const processMessage = (json, client) => {
         });
     }
 
-    else if (msg.type == "room") {
+    else if (msg.type === "room") {
         client.currentRoom = msg.data;
         console.log(`Client moved to room: ${client.currentRoom}`);
         sendMessages(client);
     }
 
     else if (msg.type === 'login') {
-        //TODO: check this
+        const result = await loginUser(msg.data.username, msg.data.password);
 
-        const result = loginUser(msg.data.username, msg.data.password);
-        client.send(JSON.stringify({
-            type: 'auth_response',
-            data: { ...result, alias: msg.data.username }
-        }));
+        console.log(result);
+        if(result.success) {
+            client.isAuthenticated = true;
+        }
+
+        client.send(serialiseMsg('login_response', result));
     }
 
-    else if (msg.type === 'register') {
-        //TODO: check this
+    else if (msg.type === 'reg') {
+        const result = await registerUser(msg.data.username, msg.data.password);
 
-        const result = registerUser(msg.data.username, msg.data.password);
-        client.send(JSON.stringify({ type: 'reg_response', data: result }));
+        if(result.success) {
+            console.log(msg.data.username + " registered.");
+            client.isAuthenticated = true;
+        }
+        else console.log(msg.data.username + " already taken.");
+
+        client.send(serialiseMsg('reg_response', result));
     }
-
+    else if(msg.type === 'logout') client.isAuthenticated = false;
     else console.debug(msg);
 }
 

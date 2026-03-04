@@ -1,5 +1,5 @@
 import bcrypt from 'bcrypt';
-import { insertUser } from './ncsRepo.js'
+import { insertUser, getUser } from './ncsRepo.js'
 
 export class authMsg {
     constructor() {
