@@ -7,7 +7,7 @@
 
       <div class="flex flex-col h100">
         <header>
-          <span>CHAT_LOG v0.2.1 - @</span>
+          <span>CHAT_LOG v0.2.2 - @</span>
           <input v-model="room" class="terminal-input input f-grow-1" placeholder="ROOM" :disabled="!uiEnabled" />
           <span>{{ time }}</span>
           <button @click="crtEnabled = !crtEnabled" class="btn" :title="crtEnabled ? 'Disable CRT' : 'Enable CRT'"
@@ -25,7 +25,7 @@
         <footer>
           <ChatForm v-if="view === 'chat'" @send-message="sendMessage" @view="(newView) => view = newView"
             :username="user.username" :room="room" :uiEnabled="uiEnabled && user.username" />
-          <AuthForm v-else v-model="user" @view="(newView) => view = newView" />
+          <AuthForm v-else v-model="user" @view="(newView) => view = newView" @login="() => sendAuth('login')" @reg="() => sendAuth('reg')"  />
         </footer>
       </div>
     </div>
@@ -43,7 +43,7 @@ import Debug from "./components/Debug.vue";
 const messages = ref([]);
 const user = ref({
   username: "tester",
-  passwordHash: ""
+  password: ""
 });
 const room = ref("root");
 const time = ref(getTime(new Date()));
@@ -93,26 +93,6 @@ onUnmounted(() => {
   clearInterval(timer);
 });
 
-//TODO: the auth bit below
-const sendAuth = (type) => {
-    systemMessage(`ENCRYPTING ${newUser.username}...`);
-    
-    // Send to your Node backend via the open socket
-    socket.send(JSON.stringify({
-        type: type, // 'login' or 'register'
-        data: newUser.value
-    }));
-};
-
-// Listen for response (Basic example)
-socket.onmessage = (e) => {
-   const res = JSON.parse(e.data);
-   if (res.type === 'auth_response' && res.data.success) {
-       user.value = { alias: res.data.alias, authenticated: true };
-       $emit('view', 'chat');
-   }
-}
-
 async function connect() {
   systemMessage("Attempting to connect to " + socketUrl, true)
   socket = new WebSocket(socketUrl);
@@ -136,6 +116,11 @@ async function connect() {
 
       await scrollToBottom();
     }
+
+    if (msg.type === 'auth_response' && msg.data.success) {
+      user.value = { alias: msg.data.alias, authenticated: true };
+      view.value = "chat";
+    }
   };
 
   socket.onclose = (e) => {
@@ -147,6 +132,7 @@ async function connect() {
       reconnectDelay *= 2;
       if (reconnectDelay <= 30000)
         await connect();
+      else systemMessage("Failed to find server, please try again later.", true);
     }, reconnectDelay);
   };
 
@@ -181,6 +167,16 @@ function setRoom(newRoom) {
     systemMessage(`NO ROOM SET`);
   }
 }
+
+function sendAuth(type) {
+  systemMessage(`ENCRYPTING ${user.value.username}...`);
+
+  // Send to your Node backend via the open socket
+  socket.send(JSON.stringify({
+    type: type, // 'login' or 'register'
+    data: user.value
+  }));
+};
 
 function sendMessage(msg) {
   if (!msg.trim() || !user.value.username.trim()) return;

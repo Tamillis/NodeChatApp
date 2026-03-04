@@ -20,7 +20,7 @@
 <script setup>
 import {ref} from 'vue';
 
-const emit = defineEmits(['sendMessage'])
+const emit = defineEmits(['sendMessage', 'view'])
 
 const msg = ref("");
 const props = defineProps(["username", "room", "uiEnabled"]);
