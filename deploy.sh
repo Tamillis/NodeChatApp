@@ -16,6 +16,7 @@ rm -f  /var/www/chat-site/index.html
 cp -r dist/* /var/www/chat-site/
 
 cd ~/NodeChatApp/NodeChatServer
+npm install
 
 if pm2 describe ncs-ws > /dev/null 2>&1; then
   pm2 reload ncs-ws --update-env
