@@ -9,6 +9,7 @@
         placeholder="SEND"
         class="input f-grow-1"
         :disabled="!uiEnabled || !authenticated"
+        max="2055"
         />
         <button @click="sendMessage" class="btn" :disabled="!uiEnabled || !authenticated">[SEND]</button>
         <button @click="$emit('view', 'auth')" class="btn" title="Switch User" :disabled="!uiEnabled" v-if="!authenticated" >

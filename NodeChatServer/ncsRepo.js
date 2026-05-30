@@ -23,7 +23,13 @@ _db.exec(`
 
 let postMessagePrep = _db.prepare('INSERT INTO messages (user, text, room) VALUES (?, ?, ?)');
 let getMessagesPrep = _db.prepare('SELECT user, text, room, timestamp FROM messages ORDER BY timestamp DESC LIMIT 50');
-let getMessagesOfPrep = _db.prepare('SELECT user, text, room, timestamp FROM messages WHERE LOWER(room) = LOWER(?) ORDER BY timestamp DESC LIMIT 50');
+let getMessagesOfPrep = _db.prepare(`
+SELECT user, text, room, timestamp 
+FROM messages 
+WHERE LOWER(room) = LOWER(?) 
+  AND date(timestamp) = date('now', 'localtime')
+ORDER BY timestamp DESC 
+LIMIT 50;`);
 let insertUserPrep = _db.prepare('INSERT INTO users (name, password_hash) VALUES (?, ?)');
 let getUserPrep = _db.prepare('SELECT password_hash FROM users WHERE name = ?');
 

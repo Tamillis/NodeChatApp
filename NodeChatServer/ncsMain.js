@@ -1,10 +1,14 @@
 import { WebSocketServer } from 'ws';
 import { getMessages, getMessagesOf, postMessage } from './ncsRepo.js'
-import { authMsg, registerUser, loginUser } from './ncsAuth.js' 
+import { authMsg, registerUser, loginUser } from './ncsAuth.js'
 import { ncsMessage } from './ncsDTO.js'
 
-const PORT = process.env.PORT;
-const wss = new WebSocketServer({ port: PORT });
+const PORT = process.env.PORT ?? 3005;
+const RATE_LIMIT = 1000;
+const MSG_MAX = 2055;
+const allowedOrigins = ['https://bell-soft.co.uk', 'https://www.bell-soft.co.uk', "http://localhost:5173"];
+console.log(allowedOrigins);
+const wss = new WebSocketServer({ port: PORT, verifyClient: ({ origin }) => allowedOrigins.includes(origin) });
 console.log("Chat server running on port " + PORT);
 
 // message handling
@@ -15,19 +19,30 @@ const sendMessages = (client) => {
     client.send(serialiseMsg("messages", messages));
 }
 
+const rateLimit = new Map();
+
 const processMessage = async (json, client) => {
     const msg = JSON.parse(json);
 
-    if (msg.type === 'message') {
-        if (!msg.data instanceof ncsMessage) {
-            console.warn("processMessage: msg.data not of class ncsMessage");
-            return;
-        }
+    const now = Date.now();
+    const timestamps = rateLimit.get(client) ?? [];
+    const recent = timestamps.filter(t => now - t < RATE_LIMIT);
+    if (recent.length >= 5) return client.close(1008, 'Rate limited');
+    rateLimit.set(client, [...recent, now]);
 
-        if(!client.isAuthenticated) {
+    if (msg.type === 'message') {
+        if (!client.isAuthenticated) {
             console.warn("processMessage: client not authenticated");
             return;
         }
+
+        if (!msg.data instanceof ncsMessage) {
+            console.warn("processMessage: msg.data not of type ncsMessage");
+            return;
+        }
+
+        if(msg.data.room.length > MSG_MAX || msg.data.user.length > MSG_MAX || msg.data.text.length > MSG_MAX)
+            return client.close(1009, 'Message too large');
 
         console.log(`Saving message: [${msg.data.room}] <${msg.data.user}>: ${msg.data.text}`);
         postMessage(msg.data);
@@ -41,7 +56,7 @@ const processMessage = async (json, client) => {
     else if (msg.type === "room") {
         client.currentRoom = msg.data;
         console.log(`Client moved to room: ${client.currentRoom}`);
-        if(client.isAuthenticated) {
+        if (client.isAuthenticated) {
             let joinMsg = {
                 room: client.currentRoom,
                 user: "SYSTEM",
@@ -56,7 +71,7 @@ const processMessage = async (json, client) => {
         const result = await loginUser(msg.data.username, msg.data.password);
 
         console.log(result);
-        if(result.success) {
+        if (result.success) {
             client.isAuthenticated = true;
             client.alias = msg.data.username;
         }
@@ -67,7 +82,7 @@ const processMessage = async (json, client) => {
     else if (msg.type === 'reg') {
         const result = await registerUser(msg.data.username, msg.data.password);
 
-        if(result.success) {
+        if (result.success) {
             console.log(msg.data.username + " registered.");
             client.isAuthenticated = true;
             client.alias = msg.data.username;
@@ -76,7 +91,7 @@ const processMessage = async (json, client) => {
 
         client.send(serialiseMsg('reg_response', result));
     }
-    else if(msg.type === 'logout') {
+    else if (msg.type === 'logout') {
         client.isAuthenticated = false;
         client.alias = "";
     }
@@ -88,9 +103,11 @@ const connect = (ws, req) => {
 
     ws.on('message', (data) => processMessage(data, ws));
 
-    // Heartbeat to keep Cloudflare Tunnel open (every 30s)
     const clientPing = setInterval(() => ws.ping(), 30_000);
-    ws.on('close', () => clearInterval(clientPing));
+    ws.on('close', () => {
+        clearInterval(clientPing);
+        rateLimit.delete(ws);
+    });
 }
 
 wss.on('connection', connect)
