@@ -1,5 +1,6 @@
 <template>
   <Debug v-model="calibration" />
+  <a id="back-panel" href="https://bell-soft.co.uk">Back to main site &larr;</a>
   <div class="monitor-frame">
     <div class="chat-container">
 
@@ -393,5 +394,20 @@ footer {
 .message-feed {
   scrollbar-width: thin;
   scrollbar-color: #33ff33 #050505;
+}
+
+#back-panel {
+  position: absolute;
+  z-index: 100;
+  font-family: sans-serif;
+  font-weight: bold;
+  font-size: 1rem;
+  padding: 0.5em;
+  background: rgb(180, 143, 98);
+}
+
+#back-panel:any-link {
+  color: black;
+  text-decoration: none;
 }
 </style>

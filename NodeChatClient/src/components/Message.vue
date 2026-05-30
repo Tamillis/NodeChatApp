@@ -7,7 +7,7 @@
 </template>
 
 <script setup>
-import { getTime } from ".././assets/utils.js"
+import { getTime } from "../assets/utils.js"
 
 const props = defineProps(["msg"]);
 
