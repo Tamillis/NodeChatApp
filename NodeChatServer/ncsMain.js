@@ -1,5 +1,7 @@
 import { WebSocketServer } from 'ws';
-import { getMessages, getMessagesOf, postMessage } from './ncsRepo.js'
+import sanitizeHtml from 'sanitize-html';
+
+import { getMessages, getMessagesOf, postMessage, db } from './ncsRepo.js'
 import { authMsg, registerUser, loginUser } from './ncsAuth.js'
 import { ncsMessage } from './ncsDTO.js'
 
@@ -22,7 +24,15 @@ const sendMessages = (client) => {
 const rateLimit = new Map();
 
 const processMessage = async (json, client) => {
-    const msg = JSON.parse(json);
+    let msg = {};
+    try {
+        msg = JSON.parse(json);
+    }
+    catch {
+        console.warn("processMessage: message was not in json format", String(json));
+        return client.close(1001, "message was not in json format");
+    }
+
 
     const now = Date.now();
     const timestamps = rateLimit.get(client) ?? [];
@@ -36,12 +46,15 @@ const processMessage = async (json, client) => {
             return;
         }
 
-        if (!msg.data instanceof ncsMessage) {
-            console.warn("processMessage: msg.data not of type ncsMessage");
+        if (!msg.data?.room || !msg.data?.user || !msg.data?.text) {
+            console.warn("processMessage: msg.data missing required fields");
             return;
         }
 
-        if(msg.data.room.length > MSG_MAX || msg.data.user.length > MSG_MAX || msg.data.text.length > MSG_MAX)
+        msg.data.room = sanitizeHtml(msg.data.room, { allowedTags: [], allowedAttributes: {} });
+        msg.data.text = sanitizeHtml(msg.data.text, { allowedTags: [], allowedAttributes: {} });
+
+        if (msg.data.room.length > MSG_MAX || msg.data.user.length > MSG_MAX || msg.data.text.length > MSG_MAX)
             return client.close(1009, 'Message too large');
 
         console.log(`Saving message: [${msg.data.room}] <${msg.data.user}>: ${msg.data.text}`);
@@ -49,11 +62,12 @@ const processMessage = async (json, client) => {
 
         console.log(`Sending messages to all connected clients of room ${client.currentRoom}...`)
         wss.clients.forEach(c => {
-            if (c.readyState === 1 && c.currentRoom === client.currentRoom) sendMessages(client);
+            if (c.readyState === 1 && c.currentRoom === client.currentRoom) sendMessages(c);
         });
     }
 
     else if (msg.type === "room") {
+        msg.data = sanitizeHtml(msg.data, { allowedTags: [], allowedAttributes: {} });
         client.currentRoom = msg.data;
         console.log(`Client moved to room: ${client.currentRoom}`);
         if (client.isAuthenticated) {
@@ -68,6 +82,7 @@ const processMessage = async (json, client) => {
     }
 
     else if (msg.type === 'login') {
+        msg.data.username = sanitizeHtml(msg.data.username, { allowedTags: [], allowedAttributes: {} });
         const result = await loginUser(msg.data.username, msg.data.password);
 
         console.log(result);
@@ -80,6 +95,7 @@ const processMessage = async (json, client) => {
     }
 
     else if (msg.type === 'reg') {
+        msg.data.username = sanitizeHtml(msg.data.username, { allowedTags: [], allowedAttributes: {} });
         const result = await registerUser(msg.data.username, msg.data.password);
 
         if (result.success) {
@@ -115,7 +131,7 @@ wss.on('connection', connect)
 const shutdown = () => {
     console.log("Shutting down...");
     wss.close();
-    db.close();
+    db().close();
     process.exit(0);
 };
 
