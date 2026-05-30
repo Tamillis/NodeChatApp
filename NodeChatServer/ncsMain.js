@@ -3,8 +3,9 @@ import { getMessages, getMessagesOf, postMessage } from './ncsRepo.js'
 import { authMsg, registerUser, loginUser } from './ncsAuth.js' 
 import { ncsMessage } from './ncsDTO.js'
 
-const wss = new WebSocketServer({ port: 3000 });
-console.log("Chat server running on port 3000!!!");
+const PORT = process.env.PORT;
+const wss = new WebSocketServer({ port: PORT });
+console.log("Chat server running on port " + PORT);
 
 // message handling
 const serialiseMsg = (type, data) => JSON.stringify({ type, data });

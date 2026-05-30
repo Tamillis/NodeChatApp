@@ -2,11 +2,10 @@
 
 ![terminal screenshot](./Screenshots/terminal.png)
 
-A demo app I intend to set up on a cloudflare worked.
-
-It is a small test demo of a web socket using chat client.
+A demo web-socket and web-app chat client. See it live at [https://bell-soft.co.uk/chat]
 
 ## Project Setup
+Development setup
 
 ```sh
 #install node then
@@ -16,11 +15,11 @@ npm i
 cd ../.nodechatserver
 npm i
 
-# run server
+# run server - with hot reload
 nodemon chatserver.js
 ```
 
-In another window open a terminal in nodechatclient
+In another terminal run the nodechatclient
 ```sh
 npm run dev
 ```
