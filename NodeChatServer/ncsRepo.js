@@ -26,8 +26,7 @@ let getMessagesPrep = _db.prepare('SELECT user, text, room, timestamp FROM messa
 let getMessagesOfPrep = _db.prepare(`
 SELECT user, text, room, timestamp 
 FROM messages 
-WHERE LOWER(room) = LOWER(?) 
-  AND date(timestamp) = date('now', 'localtime')
+WHERE LOWER(room) = LOWER(?)
 ORDER BY timestamp DESC 
 LIMIT 50;`);
 let insertUserPrep = _db.prepare('INSERT INTO users (name, password_hash) VALUES (?, ?)');
